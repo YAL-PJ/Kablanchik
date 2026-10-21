@@ -359,6 +359,7 @@ Rules:
       headers: { 'Content-Type': 'application/json', 'X-Kablanchik': '1' },
       body: body ? JSON.stringify(body) : undefined,
     });
+    if (r.status === 401) { location.reload(); throw { code: 'auth', message: 'צריך להתחבר מחדש.' }; }
     if (!r.ok) throw { code: 'server', message: 'השרת המקומי החזיר שגיאה ' + r.status };
     return r.json();
   }
