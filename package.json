@@ -1,0 +1,13 @@
+{
+  "name": "kablanchik",
+  "version": "0.1.0",
+  "private": true,
+  "description": "קבלנצ'יק — הצעות מחיר, לוח זמנים והזמנות חומרים לקבלני שיפוצים. רץ מקומית ומשתמש ב-CLI של Claude Code, Gemini ו-Codex.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/engine.test.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}

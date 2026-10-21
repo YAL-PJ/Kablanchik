@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>קבלנצ'יק</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Secular+One&display=swap">
+<style>
+/* Layout: contractor's job sheet — input column (description, plan, project data) beside a results sheet (quote, schedule, orders, price list). Yellow = highlighter marks on values the AI filled and the contractor has not yet confirmed. */
+:root {
+  --bg: #f2f4f7;
+  --surface: #ffffff;
+  --surface-2: #f7f8fa;
+  --ink: #161a21;
+  --muted: #5a6272;
+  --line: #d8dde5;
+  --accent: #2350b5;
+  --accent-ink: #ffffff;
+  --accent-soft: #e5ecfb;
+  --mark: #f3cf3e;
+  --mark-soft: #fff3bf;
+  --late: #b42318;
+  --late-soft: #fde9e7;
+  --ok: #1d7448;
+  --ok-soft: #e3f4ea;
+  --wait: #9aa3b2;
+  --f-display: "Secular One", "Rubik", "Arial Hebrew", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans Hebrew", "Segoe UI", "Arial Hebrew", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1116; --surface: #161a21; --surface-2: #1b2028; --ink: #e8ebf1; --muted: #9aa3b2; --line: #2a313c;
+    --accent: #7ea2ff; --accent-ink: #0e1116; --accent-soft: #1b2847; --mark: #e1b934; --mark-soft: #3a3115;
+    --late: #ff8f85; --late-soft: #3b1d1b; --ok: #62d39b; --ok-soft: #14301f; --wait: #6b7484; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1116; --surface: #161a21; --surface-2: #1b2028; --ink: #e8ebf1; --muted: #9aa3b2; --line: #2a313c;
+  --accent: #7ea2ff; --accent-ink: #0e1116; --accent-soft: #1b2847; --mark: #e1b934; --mark-soft: #3a3115;
+  --late: #ff8f85; --late-soft: #3b1d1b; --ok: #62d39b; --ok-soft: #14301f; --wait: #6b7484; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; max-width: 1360px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+header.top p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); }
+.tag.draft { background: var(--mark-soft); border-color: var(--mark); color: var(--ink); }
+.tag.ok { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+.tag.late { background: var(--late-soft); border-color: transparent; color: var(--late); }
+
+.layout { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 940px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.seg { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 3px; flex-wrap: wrap; }
+.seg button { flex: 1 1 auto; border: 0; background: transparent; padding: 6px 12px; border-radius: 6px; color: var(--muted); white-space: nowrap; }
+.seg button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); font-weight: 500; }
+
+textarea { width: 100%; min-height: 150px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 500; }
+.btn[disabled] { opacity: 0.55; cursor: progress; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.drop { border: 1.5px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center; color: var(--muted); background: var(--surface-2); }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop img, .drop canvas { max-width: 100%; max-height: 260px; display: block; margin: 10px auto 0; border-radius: 6px; }
+
+.ai-out { border-inline-start: 3px solid var(--mark); background: var(--mark-soft); padding: 10px 12px; border-radius: 6px; font-size: 0.9rem; }
+.ai-out ul { margin: 6px 0 0; padding-inline-start: 18px; }
+.ai-out.err { border-color: var(--late); background: var(--late-soft); }
+
+fieldset { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+fieldset legend { font-family: var(--f-display); font-size: 0.95rem; margin-bottom: 8px; padding: 0; grid-column: 1 / -1; }
+.f { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.f.wide { grid-column: 1 / -1; }
+.f label { font-size: 0.8rem; color: var(--muted); }
+.f input, .f select { width: 100%; border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; background: var(--surface); min-width: 0; }
+.f input[type="number"] { font-family: var(--f-num); direction: ltr; text-align: right; }
+.chk { flex-direction: row; align-items: center; gap: 8px; }
+.chk label { font-size: 0.9rem; color: var(--ink); }
+.ai-filled { background: var(--mark-soft) !important; border-color: var(--mark) !important; }
+.errors { color: var(--late); font-size: 0.9rem; margin: 0; padding-inline-start: 18px; }
+
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.summary > div { padding: 12px 16px; border-inline-start: 1px solid var(--line); min-width: 0; }
+.summary > div:first-child { border-inline-start: 0; }
+.summary .k { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.02em; }
+.summary .v { font-size: 1.35rem; font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+.summary .s { font-size: 0.8rem; color: var(--muted); }
+@media (max-width: 640px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .summary > div:nth-child(3) { border-inline-start: 0; } .summary > div:nth-child(n+3) { border-top: 1px solid var(--line); } }
+
+.banner { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; background: var(--mark-soft); border: 1px solid var(--mark); border-radius: var(--r); padding: 10px 14px; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs button { border: 0; background: none; padding: 9px 14px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
+.tabs .count { font-size: 0.75rem; background: var(--late-soft); color: var(--late); border-radius: 999px; padding: 0 7px; margin-inline-start: 4px; }
+
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: start; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+td.n, th.n { text-align: end; font-family: var(--f-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.chapter td { background: var(--surface-2); font-family: var(--f-display); font-size: 0.95rem; }
+tr.chapter td.n { font-family: var(--f-num); }
+.kind { font-size: 0.75rem; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.kind.m { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+tfoot td { border-bottom: 0; }
+tfoot tr.grand td { font-weight: 600; font-size: 1rem; border-top: 2px solid var(--ink); }
+tr.late td { background: var(--late-soft); }
+
+.notes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.notes li { padding: 8px 12px; border-radius: 6px; background: var(--surface-2); border-inline-start: 3px solid var(--accent); font-size: 0.9rem; }
+.notes li.warn { border-color: var(--mark); background: var(--mark-soft); }
+
+/* Gantt — time runs right to left, like the page */
+.gantt { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 0; font-size: 0.85rem; min-width: 560px; }
+.gantt .lbl { padding: 6px 0; padding-inline-end: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gantt .track { position: relative; border-bottom: 1px solid var(--line); min-height: 34px; }
+.gantt .axis { position: relative; height: 26px; border-bottom: 1px solid var(--ink); }
+.gantt .tick { position: absolute; top: 0; bottom: 0; border-inline-start: 1px solid var(--line); font-family: var(--f-num); font-size: 0.72rem; color: var(--muted); padding-inline-start: 4px; white-space: nowrap; }
+.gantt .grid { position: absolute; top: 0; bottom: 0; border-inline-start: 1px dashed var(--line); }
+.gantt .bar { position: absolute; top: 8px; height: 18px; background: var(--accent); border-radius: 4px; }
+.gantt .wait { position: absolute; top: 12px; height: 10px; border-radius: 3px; background: repeating-linear-gradient(-45deg, var(--wait) 0 3px, transparent 3px 7px); border: 1px solid var(--wait); }
+.gantt .bar.crit { background: var(--mark); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 9px; border-radius: 2px; margin-inline-end: 6px; vertical-align: middle; background: var(--accent); }
+.legend .lw::before { background: repeating-linear-gradient(-45deg, var(--wait) 0 3px, transparent 3px 7px); border: 1px solid var(--wait); }
+.legend .lg::before { background: var(--mark); }
+
+.supplier { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 720px) { .supplier { grid-template-columns: minmax(0, 1fr); } }
+.supplier textarea { min-height: 220px; font-size: 0.85rem; }
+.prices td input { width: 96px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font-family: var(--f-num); direction: ltr; text-align: right; background: var(--surface); }
+.prices-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 860px) { .prices-grid { grid-template-columns: minmax(0, 1fr); } }
+.cmp td.diff, .cmp th.diff { background: var(--mark-soft); }
+.cmp td.miss { color: var(--muted); }
+.cmp th .ms { display: block; font-family: var(--f-num); font-weight: 400; color: var(--muted); }
+.cmp td.err { color: var(--late); white-space: pre-wrap; font-size: 0.8rem; max-width: 260px; }
+details.pnotes { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--surface-2); font-size: 0.9rem; }
+details.pnotes summary { cursor: pointer; font-weight: 500; }
+details.pnotes ul { margin: 6px 0 0; padding-inline-start: 18px; }
+.foot { margin-top: 28px; font-size: 0.8rem; color: var(--muted); max-width: 80ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+[hidden] { display: none !important; }
+body { margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="wrap" dir="rtl" lang="he">
+  <header class="top">
+    <div>
+      <h1>קבלנצ'יק</h1>
+      <p>תיאור, תוכנית או טופס הופכים להצעת מחיר, לוח זמנים ולוח הזמנות חומרים. ה-AI רק קורא את הקלט; כל מספר מחושב בנוסחה קבועה.</p>
+    </div>
+    <div class="row">
+      <span class="tag">חדר רחצה · אב-טיפוס מקומי</span>
+      <span class="tag draft">מחירי דוגמה, לא מחירי שוק מאומתים</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- עמודת קלט -->
+    <div class="stack">
+      <section class="panel" aria-labelledby="in-h">
+        <div class="row" style="justify-content: space-between;">
+          <h2 id="in-h">קלט לניתוח</h2>
+          <div class="seg" role="tablist" aria-label="סוג קלט">
+            <button role="tab" id="tab-text" aria-selected="true" data-in="text">תיאור חופשי</button>
+            <button role="tab" id="tab-plan" aria-selected="false" data-in="plan">תוכנית</button>
+          </div>
+        </div>
+
+        <div id="in-text" class="stack">
+          <textarea id="free-text" aria-label="תיאור העבודה">שיפוץ חדר רחצה לזוג בבית שמש, רח' הנרקיס 12. חדר 2.4 על 1.9, תקרה 2.60.
+פירוק מלא של הריצוף והחיפוי הישן. מקלחון עם זכוכית במקום האמבטיה, אסלה תלויה, ארון עם כיור.
+אריחים 60x60 ברצפה, 30x60 בקירות עד התקרה. חלון קטן 60 על 60.
+להחליף את כל הצנרת, ונקודות חשמל חדשות. איטום צמנטי. רוצים להתחיל בתחילת דצמבר.</textarea>
+          <div class="row">
+            <div class="f" style="min-width: 150px;"><label for="provider">מודל</label><select id="provider"></select></div>
+            <span id="provider-note" class="small muted"></span>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="btn-text">נתח ומלא את הטופס</button>
+            <button class="btn" id="btn-compare">השווה בין המודלים</button>
+          </div>
+        </div>
+
+        <div id="in-plan" class="stack" hidden>
+          <label class="drop" id="drop" for="plan-file">
+            <span id="drop-msg">גרור לכאן תמונה או PDF של התוכנית, או לחץ לבחירת קובץ</span>
+            <input type="file" id="plan-file" accept="image/png,image/jpeg,image/webp,application/pdf" hidden>
+            <div id="plan-preview"></div>
+          </label>
+          <textarea id="plan-notes" style="min-height: 70px;" aria-label="הערות לתוכנית" placeholder="הערות שאין בתוכנית, למשל: פירוק מלא, מקלחון, אסלה תלויה"></textarea>
+          <div class="row">
+            <button class="btn primary" id="btn-plan" disabled>קרא את התוכנית</button>
+          </div>
+          <p class="small muted" style="margin:0">קריאת תוכניות תתווסף בצעד הבא. בינתיים אפשר לתאר את התוכנית בטקסט.</p>
+        </div>
+
+        <div id="ai-status" class="ai-out" hidden></div>
+      </section>
+
+
+      <section class="panel" aria-labelledby="form-h">
+        <div class="row" style="justify-content: space-between;">
+          <h2 id="form-h">נתוני הפרויקט</h2>
+          <button class="btn small" id="btn-reset">איפוס לדוגמה</button>
+        </div>
+        <p class="small muted" style="margin:0">זה מקור החישוב. כל שינוי כאן מעדכן את ההצעה מיד.</p>
+        <form id="proj" class="stack" novalidate>
+          <fieldset>
+            <legend>לקוח ותאריכים</legend>
+            <div class="f"><label for="client">לקוח</label><input id="client" data-path="client"></div>
+            <div class="f"><label for="address">כתובת</label><input id="address" data-path="address"></div>
+            <div class="f"><label for="startDate">תאריך התחלה</label><input id="startDate" type="date" data-path="startDate"></div>
+            <div class="f"><label for="vatPct">מע"מ %</label><input id="vatPct" type="number" step="0.5" data-path="vatPct" data-num></div>
+            <div class="f wide"><label for="materialMarkupPct">תוספת על חומרים %</label><input id="materialMarkupPct" type="number" step="1" data-path="materialMarkupPct" data-num></div>
+          </fieldset>
+          <fieldset>
+            <legend>מידות החדר (מטרים)</legend>
+            <div class="f"><label for="length">אורך</label><input id="length" type="number" step="0.01" data-path="room.length" data-num></div>
+            <div class="f"><label for="width">רוחב</label><input id="width" type="number" step="0.01" data-path="room.width" data-num></div>
+            <div class="f"><label for="height">גובה תקרה</label><input id="height" type="number" step="0.01" data-path="room.height" data-num></div>
+            <div class="f"><label for="wallTileHeight">גובה חיפוי</label><input id="wallTileHeight" type="number" step="0.01" data-path="room.wallTileHeight" data-num></div>
+            <div class="f"><label for="doorWidth">רוחב דלת</label><input id="doorWidth" type="number" step="0.01" data-path="room.doorWidth" data-num></div>
+            <div class="f"><label for="doorHeight">גובה דלת</label><input id="doorHeight" type="number" step="0.01" data-path="room.doorHeight" data-num></div>
+            <div class="f"><label for="windowWidth">רוחב חלון</label><input id="windowWidth" type="number" step="0.01" data-path="room.windowWidth" data-num></div>
+            <div class="f"><label for="windowHeight">גובה חלון</label><input id="windowHeight" type="number" step="0.01" data-path="room.windowHeight" data-num></div>
+          </fieldset>
+          <fieldset>
+            <legend>מפרט</legend>
+            <div class="f"><label for="scope">היקף</label><select id="scope" data-path="spec.scope"><option value="full">פירוק מלא</option><option value="partial">חידוש בלי פירוק</option></select></div>
+            <div class="f"><label for="fixture">רחצה</label><select id="fixture" data-path="spec.fixture"><option value="shower">מקלחון</option><option value="bath">אמבטיה</option></select></div>
+            <div class="f"><label for="toilet">אסלה</label><select id="toilet" data-path="spec.toilet"><option value="wall">תלויה + מיכל סמוי</option><option value="floor">עומדת</option></select></div>
+            <div class="f"><label for="waterproofing">איטום</label><select id="waterproofing" data-path="spec.waterproofing"><option value="cement">צמנטי גמיש</option><option value="pu">פוליאוריטני</option></select></div>
+            <div class="f"><label for="floorTile">אריח רצפה (ס"מ)</label><input id="floorTile" data-path="spec.floorTile" dir="ltr"></div>
+            <div class="f"><label for="wallTile">אריח קיר (ס"מ)</label><input id="wallTile" data-path="spec.wallTile" dir="ltr"></div>
+            <div class="f"><label for="ceiling">תקרה</label><select id="ceiling" data-path="spec.ceiling"><option value="none">ללא שינוי</option><option value="gypsum">תקרת גבס</option></select></div>
+            <div class="f"><label for="drain">ניקוז</label><select id="drain" data-path="spec.drain"><option value="channel">תעלת ניקוז</option><option value="point">מחסום רצפה קיים</option></select></div>
+            <div class="f chk"><input type="checkbox" id="vanity" data-path="spec.vanity"><label for="vanity">ארון + כיור</label></div>
+            <div class="f chk"><input type="checkbox" id="newPlumbing" data-path="spec.newPlumbing"><label for="newPlumbing">צנרת חדשה</label></div>
+            <div class="f chk"><input type="checkbox" id="newElectrical" data-path="spec.newElectrical"><label for="newElectrical">נקודות חשמל חדשות</label></div>
+          </fieldset>
+        </form>
+        <ul id="errors" class="errors" hidden></ul>
+      </section>
+    </div>
+
+    <!-- עמודת תוצאות -->
+    <div class="stack">
+      <section class="panel" id="compare-panel" hidden aria-labelledby="cmp-h">
+        <div class="row" style="justify-content: space-between;">
+          <h2 id="cmp-h">השוואת מודלים</h2>
+          <button class="btn small" id="btn-close-compare">סגור</button>
+        </div>
+        <p class="small muted" style="margin:0">אותו תיאור, אותן הוראות. שורות מסומנות הן שדות שבהם המודלים לא הסכימו.</p>
+        <div class="scroll"><table id="compare-table"></table></div>
+        <div id="compare-notes" class="stack"></div>
+      </section>
+
+      <div id="approve" class="banner" hidden>
+        <span id="approve-msg"></span>
+        <button class="btn" id="btn-approve">בדקתי, אשר את כל השדות</button>
+      </div>
+
+      <div class="summary" id="summary" aria-live="polite"></div>
+
+      <section class="panel">
+        <div class="tabs" role="tablist" aria-label="תוצאות">
+          <button role="tab" aria-selected="true" data-out="quote" id="t-quote">הצעת מחיר</button>
+          <button role="tab" aria-selected="false" data-out="sched" id="t-sched">לוח זמנים</button>
+          <button role="tab" aria-selected="false" data-out="orders" id="t-orders">הזמנות חומרים</button>
+          <button role="tab" aria-selected="false" data-out="prices" id="t-prices">מחירון</button>
+        </div>
+
+        <div id="out-quote" class="stack">
+          <div class="row" style="justify-content: space-between;">
+            <div class="row"><h2>הצעת מחיר</h2><span id="quote-state" class="tag draft">טיוטה</span></div>
+            <div class="row">
+              <button class="btn" id="btn-review">הערות AI להצעה</button>
+              <button class="btn" id="btn-copy-quote">העתק כטקסט</button>
+              <button class="btn" id="btn-csv-quote">הורד CSV</button>
+            </div>
+          </div>
+          <div id="review" hidden></div>
+          <div class="scroll"><table id="quote-table"></table></div>
+        </div>
+
+        <div id="out-sched" class="stack" hidden>
+          <div class="row" style="justify-content: space-between;">
+            <h2>לוח זמנים</h2>
+            <div class="legend"><span>עבודה באתר</span><span class="lw">המתנה (ייבוש, בדיקה)</span><span class="lg">ממתין לחומר</span></div>
+          </div>
+          <p class="small muted" style="margin:0">ימי עבודה א'-ה'. חגים עדיין לא נכללים בחישוב.</p>
+          <div class="scroll"><div id="gantt" class="gantt"></div></div>
+          <div class="scroll"><table id="sched-table"></table></div>
+        </div>
+
+        <div id="out-orders" class="stack" hidden>
+          <h2>לוח הזמנות חומרים</h2>
+          <p class="small muted" style="margin:0">תאריך הזמנה אחרון = תחילת השלב פחות ימי אספקה פחות יום ביטחון. כמויות כוללות פחת ומעוגלות לאריזה שלמה.</p>
+          <div class="scroll"><table id="orders-table"></table></div>
+          <h3>הזמנה לספק</h3>
+          <div class="supplier">
+            <div class="stack">
+              <div class="f"><label for="supplier-sel">ספק</label><select id="supplier-sel"></select></div>
+              <p class="small muted" style="margin:0">ההודעה מוכנה להדבקה בוואטסאפ או במייל לספק. אינטגרציה ישירה עם חנויות תבוא בשלב מאוחר יותר.</p>
+              <div class="row">
+                <button class="btn primary" id="btn-copy-order">העתק הודעה</button>
+                <button class="btn" id="btn-csv-order">הורד CSV</button>
+              </div>
+            </div>
+            <textarea id="order-text" aria-label="נוסח ההזמנה" readonly></textarea>
+          </div>
+        </div>
+
+        <div id="out-prices" class="stack" hidden>
+          <div class="row" style="justify-content: space-between;">
+            <h2>מחירון (₪, לפני מע"מ)</h2>
+            <button class="btn" id="btn-reset-prices">חזרה למחירי הדוגמה</button>
+          </div>
+          <p class="small muted" style="margin:0">אריחים וגבס במחיר למ"ר. כל שאר החומרים במחיר לאריזה. המחירון נשמר בדפדפן הזה בלבד.</p>
+          <div class="prices-grid">
+            <div class="scroll"><table class="prices" id="labor-prices"></table></div>
+            <div class="scroll"><table class="prices" id="mat-prices"></table></div>
+          </div>
+        </div>
+      </section>
+      <p id="toast" class="small" role="status" aria-live="polite" style="margin:0; min-height:1.2em;"></p>
+    </div>
+  </div>
+
+  <p class="foot">נוסחאות הכמויות, תפוקות העבודה וזמני האספקה הם הערכות ברירת מחדל לאב-טיפוס, וצריך לכייל אותן מול הצעות אמיתיות של קבלנים לפני שימוש מול לקוח.</p>
+</div>
+
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
