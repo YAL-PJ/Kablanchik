@@ -72,9 +72,10 @@ function run(bin, args, input, timeoutMs) {
     let out = '', err = '', done = false;
     let child;
     try {
-      child = spawn(IS_WIN ? winQuote(bin) : bin, IS_WIN ? args.map(winQuote) : args, {
-        cwd: WORK, shell: IS_WIN, windowsHide: true, env: process.env,
-      });
+      // ב-Windows: בונים שורת פקודה אחת בעצמנו (עם ציטוט), כדי ש-.cmd יעבדו ובלי אזהרת DEP0190
+      child = IS_WIN
+        ? spawn([bin, ...args].map(winQuote).join(' '), { cwd: WORK, shell: true, windowsHide: true, env: process.env })
+        : spawn(bin, args, { cwd: WORK, windowsHide: true, env: process.env });
     } catch (e) {
       resolve({ code: -1, out: '', err: String(e.message || e), ms: 0 });
       return;
@@ -93,8 +94,10 @@ function run(bin, args, input, timeoutMs) {
 async function providerStatus() {
   const entries = await Promise.all(Object.entries(PROVIDERS).map(async ([id, p]) => {
     const r = await run(p.bin, ['--version'], null, 20000);
-    const version = (r.out || r.err).trim().split('\n')[0].slice(0, 80);
-    return { id, label: p.label, available: r.code === 0, version: r.code === 0 ? version : '' };
+    const first = s => String(s || '').trim().split(/\r?\n/)[0].slice(0, 160);
+    const ok = r.code === 0;
+    const reason = ok ? '' : r.code === -2 ? 'לא ענה תוך 20 שניות' : (first(r.err) || first(r.out) || `יצא עם קוד ${r.code}`);
+    return { id, label: p.label, bin: p.bin, available: ok, version: ok ? first(r.out || r.err).slice(0, 80) : '', reason };
   }));
   return entries;
 }
@@ -170,7 +173,10 @@ const server = http.createServer(async (req, res) => {
 if (require.main === module) {
   server.listen(PORT, HOST, () => {
     console.log(`קבלנצ'יק רץ: http://localhost:${PORT}`);
-    providerStatus().then(list => list.forEach(p => console.log(`  ${p.available ? '✓' : '✗'} ${p.label}${p.version ? ' — ' + p.version : ''}`)));
+    providerStatus().then(list => {
+      list.forEach(p => console.log(`  ${p.available ? '✓' : '✗'} ${p.label}${p.available ? ' — ' + p.version : `  (הפקודה "${p.bin} --version" נכשלה: ${p.reason})`}`));
+      if (list.some(p => !p.available)) console.log('  מודל שלא נמצא: בדוק שהוא מותקן ושהפקודה שלו עובדת בטרמינל הזה. אפשר גם להגדיר נתיב מלא, ראה README.');
+    });
   });
 }
 module.exports = { server, looseJson, PROVIDERS };

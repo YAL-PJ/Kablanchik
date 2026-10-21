@@ -499,7 +499,7 @@ Rules:
     providers = list;
     const sel = $('provider');
     let saved = null; try { saved = localStorage.getItem('kb.provider'); } catch {}
-    sel.innerHTML = list.map(p => `<option value="${p.id}" ${p.available ? '' : 'disabled'}>${esc(p.label)}${p.available ? '' : ' (לא מותקן)'}</option>`).join('');
+    sel.innerHTML = list.map(p => `<option value="${p.id}" ${p.available ? '' : 'disabled'} title="${esc(p.reason || p.version || '')}">${esc(p.label)}${p.available ? '' : ' (לא נמצא)'}</option>`).join('');
     const first = list.find(p => p.available && p.id === saved) || list.find(p => p.available);
     if (first) sel.value = first.id;
     const n = list.filter(p => p.available).length;
